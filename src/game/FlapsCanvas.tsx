@@ -15,7 +15,7 @@ export type GameState = 'TITLE_MENU' | 'PLAYING' | 'GAME_OVER';
 
 export const LOGICAL_WIDTH = 360;
 export const LOGICAL_HEIGHT = 640;
-export const WORLD_ZOOM = 1.14;
+export const WORLD_ZOOM = 1.04;
 export const VIEW_WORLD_WIDTH = LOGICAL_WIDTH / WORLD_ZOOM;
 export const VIEW_WORLD_HEIGHT = LOGICAL_HEIGHT / WORLD_ZOOM;
 
@@ -147,7 +147,7 @@ interface PowerUpEntity {
   collected: boolean;
 }
 
-const PLAYER_RADIUS = 13;
+const PLAYER_RADIUS = 14;
 
 export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
   gameState,
@@ -541,7 +541,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     sim.invulnTimer = 1.3;
     sim.flashAlpha = 0.25;
     const { minCamY, maxCamY, camCenterOffset } = getViewMetrics();
-    sim.cameraX = sim.playerX - 66;
+    sim.cameraX = sim.playerX - 76;
     sim.cameraY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));
     pointerHeldRef.current = false;
     keyHeldRef.current = false;
@@ -592,8 +592,9 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       sim.powerUpHudAcc = 0;
       sim.hasJumpedOnce = false;
       const { baseTitleCamY } = getViewMetrics();
-      sim.cameraX = 0;
-      sim.prevCameraX = 0;
+      const titleCamX = gameState === 'TITLE_MENU' ? -38 : 0;
+      sim.cameraX = titleCamX;
+      sim.prevCameraX = titleCamX;
       sim.cameraY = baseTitleCamY;
       if (spritesRef.current) {
         populateMonuments(spritesRef.current);
@@ -961,7 +962,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       }
 
       if (state === 'TITLE_MENU') {
-        sim.cameraX = 0;
+        sim.cameraX = -38;
         sim.cameraY = baseTitleCamY;
         for (let i = 0; i < sim.frames.length; i++) {
           const f = sim.frames[i];
@@ -1200,8 +1201,9 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
           sim.playerY += sim.playerVy * dt;
 
           // Soft top boundary below HUD
-          if (sim.playerY < 56) {
-            sim.playerY = 56;
+          const topHudFloorY = Math.max(44, sim.cameraY + 68);
+          if (sim.playerY < topHudFloorY) {
+            sim.playerY = topHudFloorY;
             if (sim.playerVy < 0) sim.playerVy = 0;
           }
 
@@ -1434,8 +1436,8 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         }
       }
 
-      // Camera keeps player comfortably in left-center (~21% of 316px zoomed view) & smoothly follows vertically
-      const targetCamX = sim.playerX - 66;
+      // Camera keeps player comfortably in Flappy-Bird-like left-center (~22% of view) & smoothly follows vertically
+      const targetCamX = sim.playerX - 76;
       sim.cameraX += (targetCamX - sim.cameraX) * Math.min(1, dt * 8.5);
 
       const targetCamY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));

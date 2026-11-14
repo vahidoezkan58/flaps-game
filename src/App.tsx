@@ -867,46 +867,47 @@ export default function App() {
 
         {/* TITLE SCREEN OVERLAY */}
         {gameState === 'TITLE_MENU' && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-between px-5 pt-[calc(max(12px,env(safe-area-inset-top))+46px)] pb-[max(14px,env(safe-area-inset-bottom))]">
-            {/* Title Lockup + Challenge */}
-            <div className="flex flex-col items-center text-center">
-              <svg
-                viewBox="0 0 240 68"
-                className="h-[44px] w-[170px] drop-shadow-[0_4px_0_rgba(255,255,255,0.65)]"
-                role="img"
-                aria-label="FLAPS"
-              >
-                <text
-                  x="120"
-                  y="52"
-                  textAnchor="middle"
-                  fill="#111111"
-                  fontFamily="Outfit, system-ui, sans-serif"
-                  fontWeight="900"
-                  fontSize="58"
-                  letterSpacing="-2"
+          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-5 pt-[calc(max(12px,env(safe-area-inset-top))+46px)] pb-[max(14px,env(safe-area-inset-bottom))]">
+            <div className="flex h-full max-h-[640px] w-full max-w-[336px] flex-col items-center justify-between">
+              {/* Title Lockup + Challenge */}
+              <div className="flex flex-col items-center text-center">
+                <svg
+                  viewBox="0 0 240 68"
+                  className="h-[46px] w-[178px] drop-shadow-[0_4px_0_rgba(255,255,255,0.65)]"
+                  role="img"
+                  aria-label="FLAPS"
                 >
-                  FLAPS
-                </text>
-              </svg>
+                  <text
+                    x="120"
+                    y="52"
+                    textAnchor="middle"
+                    fill="#111111"
+                    fontFamily="Outfit, system-ui, sans-serif"
+                    fontWeight="900"
+                    fontSize="58"
+                    letterSpacing="-2"
+                  >
+                    FLAPS
+                  </text>
+                </svg>
 
-              <p className="mt-0.5 text-[12.5px] font-bold text-[#111111] drop-shadow-[0_1px_0_rgba(255,255,255,0.65)]">
-                Tippen & halten für längere Sprünge
-              </p>
-
-              {/* Motivating Challenge Banner */}
-              <div className="mt-1.5 max-w-[292px] rounded-xl border border-white/80 bg-[#121015]/75 px-3 py-1.5 text-center shadow-[0_4px_0_rgba(17,17,17,0.2)] backdrop-blur-[2px]">
-                <div className="font-retro text-[7.5px] tracking-widest text-[#4ADE80]">
-                  CHALLENGE
-                </div>
-                <p className="mt-0.5 text-[11.5px] leading-snug font-bold text-white">
-                  {MOTIVATING_CHALLENGES[challengeIdx]}
+                <p className="mt-0.5 text-[12.5px] font-bold text-[#111111] drop-shadow-[0_1px_0_rgba(255,255,255,0.65)]">
+                  Tippen & halten für längere Sprünge
                 </p>
-              </div>
-            </div>
 
-            {/* Bottom Action Cluster */}
-            <div className="pointer-events-auto flex w-full max-w-[280px] flex-col items-center gap-1.5">
+                {/* Motivating Challenge Banner */}
+                <div className="mt-1.5 w-full max-w-[320px] rounded-xl border border-white/80 bg-[#121015]/75 px-3 py-1.5 text-center shadow-[0_4px_0_rgba(17,17,17,0.2)] backdrop-blur-[2px]">
+                  <div className="font-retro text-[7.5px] tracking-widest text-[#4ADE80]">
+                    CHALLENGE
+                  </div>
+                  <p className="mt-0.5 text-[11.5px] leading-snug font-bold text-white">
+                    {MOTIVATING_CHALLENGES[challengeIdx]}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Action Cluster */}
+              <div className="pointer-events-auto flex w-full max-w-[320px] flex-col items-center gap-1.5">
               {highScore > 0 && (
                 <div className="rounded-full bg-white/80 px-3 py-0.5 text-[11.5px] font-bold tracking-tight text-[#111111] tabular-nums backdrop-blur-[2px]">
                   Bestleistung: {highScore} · {progression.boardCharges} Boards
@@ -1004,6 +1005,7 @@ export default function App() {
                   Maus · Touch · Leertaste
                 </span>
               </div>
+            </div>
             </div>
           </div>
         )}
