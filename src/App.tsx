@@ -867,8 +867,8 @@ export default function App() {
 
         {/* TITLE SCREEN OVERLAY */}
         {gameState === 'TITLE_MENU' && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-5 pt-[calc(max(12px,env(safe-area-inset-top))+46px)] pb-[max(14px,env(safe-area-inset-bottom))]">
-            <div className="flex h-full max-h-[640px] w-full max-w-[336px] flex-col items-center justify-between">
+          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-5 pt-[calc(max(12px,env(safe-area-inset-top))+42px)] pb-[max(14px,env(safe-area-inset-bottom))]">
+            <div className="flex h-full max-h-[520px] w-full max-w-[336px] flex-col items-center justify-between">
               {/* Title Lockup + Challenge */}
               <div className="flex flex-col items-center text-center">
                 <svg

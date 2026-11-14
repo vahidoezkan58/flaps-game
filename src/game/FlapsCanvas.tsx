@@ -349,10 +349,10 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         kind: 'normal',
         baseX: 42,
         x: 42,
-        baseY: 350,
-        y: 350,
+        baseY: 342,
+        y: 342,
         width: 84,
-        height: 132,
+        height: 108,
         openBottom: false,
         hasStairs: false,
         scored: true,
@@ -838,8 +838,9 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     };
 
     const spawnFallBurst = (x: number) => {
-      const { viewWorldH } = getViewMetrics();
-      const burstY = sim.cameraY + viewWorldH - 10;
+      const { logicalH, viewWorldH } = getViewMetrics();
+      const horizonWorldH = (44 + Math.min(64, Math.max(0, logicalH - LOGICAL_HEIGHT) * 0.46)) / WORLD_ZOOM;
+      const burstY = sim.cameraY + viewWorldH - horizonWorldH * 0.55;
       for (let i = 0; i < 14; i++) {
         const angle = -Math.PI + Math.random() * Math.PI;
         const spd = 65 + Math.random() * 110;
@@ -1316,8 +1317,10 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
             }
           }
 
-          const visibleBottomWorldY = sim.cameraY + viewWorldH;
-          if (!landed && sim.playerY - PLAYER_RADIUS > visibleBottomWorldY + 18) {
+          const horizonWorldH =
+            (44 + Math.min(64, Math.max(0, logicalH - LOGICAL_HEIGHT) * 0.46)) / WORLD_ZOOM;
+          const visibleBottomWorldY = sim.cameraY + viewWorldH - horizonWorldH * 0.35;
+          if (!landed && sim.playerY - PLAYER_RADIUS > visibleBottomWorldY + 12) {
             if (boardChargesRef.current > 0) {
               boardChargesRef.current = Math.max(0, boardChargesRef.current - 1);
               onBoardConsumedRef.current();
@@ -1891,7 +1894,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       }
 
       const { logicalH, viewWorldH, extraWorldH, baseTitleCamY } = getViewMetrics();
-      const monScale = Math.max(1, viewWorldH / VIEW_WORLD_HEIGHT);
+      const horizonPx = 44 + Math.min(64, Math.max(0, logicalH - LOGICAL_HEIGHT) * 0.46);
 
       // 1. Warm rose-pink gradient sky
       const bgGrad = ctx.createLinearGradient(0, 0, 0, logicalH);
@@ -1918,7 +1921,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         }
       }
 
-      // 2b & 3. Zoomed Giant Isometric Pink Staircase Monuments with gentle vertical parallax
+      // 2b & 3. Giant Isometric Pink Staircase Monuments (crisp unstretched aspect ratio)
       ctx.save();
       ctx.scale(WORLD_ZOOM, WORLD_ZOOM);
       ctx.translate(0, -sim.cameraY * 0.45);
@@ -1928,14 +1931,12 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         for (let i = 0; i < sim.farMonuments.length; i++) {
           const m = sim.farMonuments[i];
           const sx = m.worldX - farParallaxX;
-          const drawW = m.drawW * monScale;
-          const drawH = m.drawH * monScale;
-          const drawY = m.y - extraWorldH * 0.10;
-          if (sx + drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
+          const drawY = m.y - extraWorldH * 0.18;
+          if (sx + m.drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
           const sp = sprites.monuments[m.spriteIdx % sprites.monuments.length];
           ctx.save();
           ctx.globalAlpha = 0.44;
-          ctx.drawImage(sp, sx, drawY, drawW, drawH);
+          ctx.drawImage(sp, sx, drawY, m.drawW, m.drawH);
           ctx.restore();
         }
       }
@@ -1945,14 +1946,12 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         for (let i = 0; i < sim.monuments.length; i++) {
           const m = sim.monuments[i];
           const sx = m.worldX - parallaxX;
-          const drawW = m.drawW * monScale;
-          const drawH = m.drawH * monScale;
-          const drawY = m.y - extraWorldH * 0.14;
-          if (sx + drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
+          const drawY = m.y - extraWorldH * 0.18;
+          if (sx + m.drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
           const sp = sprites.monuments[m.spriteIdx % sprites.monuments.length];
           ctx.save();
           ctx.globalAlpha = 0.96;
-          ctx.drawImage(sp, sx, drawY, drawW, drawH);
+          ctx.drawImage(sp, sx, drawY, m.drawW, m.drawH);
           ctx.restore();
         }
       } else {
@@ -2182,6 +2181,26 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
 
       ctx.restore();
 
+      // 9b. Soft scrolling pink cloud-mist horizon floor (prevents tall-screen vertical tunnel feel)
+      const horizonTop = logicalH - horizonPx;
+      const mistGrad = ctx.createLinearGradient(0, horizonTop - 26, 0, logicalH);
+      mistGrad.addColorStop(0, 'rgba(244, 169, 193, 0)');
+      mistGrad.addColorStop(0.45, 'rgba(248, 200, 218, 0.55)');
+      mistGrad.addColorStop(1, 'rgba(255, 226, 238, 0.92)');
+      ctx.fillStyle = mistGrad;
+      ctx.fillRect(-12, horizonTop - 26, LOGICAL_WIDTH + 24, horizonPx + 38);
+
+      const puffScroll = ((sim.cameraX * 0.72 + sim.time * 12) % 72 + 72) % 72;
+      ctx.fillStyle = 'rgba(255, 236, 244, 0.72)';
+      ctx.beginPath();
+      for (let px = -72; px <= LOGICAL_WIDTH + 72; px += 36) {
+        const cx = px - puffScroll;
+        const cy = horizonTop + 8 + Math.sin(px * 0.11 + sim.time * 1.4) * 3;
+        ctx.moveTo(cx + 26, cy);
+        ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+      }
+      ctx.fill();
+
       // 10. In-game initial jump hint
       if (gameStateRef.current === 'PLAYING' && !sim.hasJumpedOnce) {
         ctx.save();
@@ -2190,8 +2209,8 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
         ctx.shadowColor = 'rgba(130, 35, 70, 0.5)';
         ctx.shadowBlur = 8;
-        ctx.fillText('Tippen & halten für', LOGICAL_WIDTH / 2, logicalH - 138);
-        ctx.fillText('längere Sprünge', LOGICAL_WIDTH / 2, logicalH - 114);
+        ctx.fillText('Tippen & halten für', LOGICAL_WIDTH / 2, horizonTop - 52);
+        ctx.fillText('längere Sprünge', LOGICAL_WIDTH / 2, horizonTop - 28);
         ctx.restore();
       }
 
@@ -2329,7 +2348,7 @@ function generateNextFrame(prev: GreenFrame, id: number, scoreHint: number): Gre
     kind === 'crumbling' && gapTier === 'short'
       ? Math.round(Math.max(widthMin, rawWidth))
       : Math.round(Math.max(widthMin, Math.min(widthMax, rawWidth)));
-  const height = Math.round(115 + Math.random() * 46);
+  const height = Math.round(94 + Math.random() * 34);
 
   // Stronger randomized height variations (bold climbs & deep drops, physics-verified)
   let dy: number;
