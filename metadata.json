@@ -1,0 +1,8 @@
+{
+  "name": "FLAPS",
+  "description": "Spielbares 2D-Arcade-Game im Klarna/Flarie-Stil mit Hold-to-Fly-Steuerung, Parallax-Monumenten, Wolken und Web-Audio-Breakbeat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
