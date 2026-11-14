@@ -679,9 +679,9 @@ export default function App() {
   const totalRunCoins = runCoins + lastScoreBonusCoins;
 
   return (
-    <main className="flex h-[100dvh] w-screen items-center justify-center bg-[#121015] p-0 sm:p-4">
-      {/* Fullscreen on mobile phones, crisp 360x640 arcade shell on desktop */}
-      <div className="relative h-[100dvh] w-full overflow-hidden bg-[#FFB3C7] shadow-[0_24px_64px_rgba(0,0,0,0.65)] sm:aspect-[9/16] sm:h-full sm:max-h-[640px] sm:max-w-[360px] sm:rounded-[28px] sm:ring-1 sm:ring-white/10">
+    <main className="fixed inset-0 overflow-hidden bg-gradient-to-b from-[#F4A9C1] via-[#E98DAB] to-[#DF7A9B] sm:static sm:flex sm:h-[100dvh] sm:w-screen sm:items-center sm:justify-center sm:bg-[#121015] sm:bg-none sm:p-4">
+      {/* Edge-to-edge fullscreen on mobile phones, proportional 9:16 arcade shell on desktop */}
+      <div className="relative h-full w-full overflow-hidden bg-[#F4A9C1] sm:aspect-[9/16] sm:h-[min(92dvh,820px)] sm:w-auto sm:max-w-[92vw] sm:rounded-[28px] sm:shadow-[0_24px_64px_rgba(0,0,0,0.65)] sm:ring-1 sm:ring-white/10">
         {/* Isolated 60fps Game Canvas */}
         <FlapsCanvas
           gameState={gameState}

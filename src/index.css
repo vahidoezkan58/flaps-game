@@ -5,12 +5,22 @@
   body,
   #root {
     height: 100%;
+    width: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
+    overscroll-behavior: none;
     font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-    background-color: #121015;
+    background: linear-gradient(180deg, #F4A9C1 0%, #E98DAB 55%, #DF7A9B 100%);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (min-width: 640px) {
+    html,
+    body,
+    #root {
+      background: #121015;
+    }
   }
 }
 

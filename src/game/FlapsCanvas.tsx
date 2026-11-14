@@ -541,7 +541,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     sim.invulnTimer = 1.3;
     sim.flashAlpha = 0.25;
     const { minCamY, maxCamY, camCenterOffset } = getViewMetrics();
-    sim.cameraX = sim.playerX - 50;
+    sim.cameraX = sim.playerX - 66;
     sim.cameraY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));
     pointerHeldRef.current = false;
     keyHeldRef.current = false;
@@ -1434,8 +1434,8 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         }
       }
 
-      // Camera keeps player near left x = 50px (in 316px zoomed view) & smoothly follows vertically
-      const targetCamX = sim.playerX - 50;
+      // Camera keeps player comfortably in left-center (~21% of 316px zoomed view) & smoothly follows vertically
+      const targetCamX = sim.playerX - 66;
       sim.cameraX += (targetCamX - sim.cameraX) * Math.min(1, dt * 8.5);
 
       const targetCamY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));
@@ -2240,12 +2240,14 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       resizeObserver.observe(canvas);
     }
     window.addEventListener('resize', syncCanvasSize);
+    window.visualViewport?.addEventListener('resize', syncCanvasSize);
 
     rafId = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(rafId);
       resizeObserver?.disconnect();
       window.removeEventListener('resize', syncCanvasSize);
+      window.visualViewport?.removeEventListener('resize', syncCanvasSize);
     };
   }, [audio]);
 
