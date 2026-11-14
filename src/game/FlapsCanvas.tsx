@@ -170,6 +170,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
   onGameOver,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const logicalHeightRef = useRef<number>(LOGICAL_HEIGHT);
   const gameStateRef = useRef<GameState>(gameState);
   const isPausedRef = useRef<boolean>(isPaused);
   isPausedRef.current = isPaused;
@@ -258,6 +259,22 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     bubbles: [] as FloatingBubble[],
     initializedWorld: false,
   });
+
+  const getViewMetrics = () => {
+    const logicalH = logicalHeightRef.current;
+    const viewWorldH = logicalH / WORLD_ZOOM;
+    const extraWorldH = Math.max(0, viewWorldH - VIEW_WORLD_HEIGHT);
+    const camCenterOffset = extraWorldH * 0.44;
+    return {
+      logicalH,
+      viewWorldH,
+      extraWorldH,
+      camCenterOffset,
+      baseTitleCamY: 34 - camCenterOffset,
+      minCamY: -14 - camCenterOffset,
+      maxCamY: 78 - camCenterOffset,
+    };
+  };
 
   const spawnCollectiblesForFrame = (
     prev: GreenFrame,
@@ -523,8 +540,9 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     sim.boardVisualTimer = reason === 'board' ? 1.8 : 1.3;
     sim.invulnTimer = 1.3;
     sim.flashAlpha = 0.25;
+    const { minCamY, maxCamY, camCenterOffset } = getViewMetrics();
     sim.cameraX = sim.playerX - 50;
-    sim.cameraY = Math.max(-14, Math.min(78, sim.playerY - 248));
+    sim.cameraY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));
     pointerHeldRef.current = false;
     keyHeldRef.current = false;
     audio.setHolding(false);
@@ -573,9 +591,10 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       sim.invulnTimer = 0;
       sim.powerUpHudAcc = 0;
       sim.hasJumpedOnce = false;
+      const { baseTitleCamY } = getViewMetrics();
       sim.cameraX = 0;
       sim.prevCameraX = 0;
-      sim.cameraY = 34;
+      sim.cameraY = baseTitleCamY;
       if (spritesRef.current) {
         populateMonuments(spritesRef.current);
       }
@@ -725,8 +744,21 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    canvas.width = LOGICAL_WIDTH * dpr;
-    canvas.height = LOGICAL_HEIGHT * dpr;
+    const syncCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const nextLogicalH =
+        rect.width > 0 && rect.height > 0
+          ? Math.max(560, Math.min(960, Math.round(LOGICAL_WIDTH * (rect.height / rect.width))))
+          : LOGICAL_HEIGHT;
+      logicalHeightRef.current = nextLogicalH;
+      const targetW = Math.round(LOGICAL_WIDTH * dpr);
+      const targetH = Math.round(nextLogicalH * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
+    };
+    syncCanvasSize();
 
     const sim = simRef.current;
     if (!sim.initializedWorld) {
@@ -757,7 +789,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       for (let i = 0; i < 16; i++) {
         sim.bubbles.push({
           x: Math.random() * LOGICAL_WIDTH,
-          y: Math.random() * LOGICAL_HEIGHT,
+          y: Math.random() * logicalHeightRef.current,
           r: 4 + Math.random() * 13,
           speedY: 16 + Math.random() * 20,
           phase: Math.random() * Math.PI * 2,
@@ -805,7 +837,8 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
     };
 
     const spawnFallBurst = (x: number) => {
-      const burstY = sim.cameraY + VIEW_WORLD_HEIGHT - 10;
+      const { viewWorldH } = getViewMetrics();
+      const burstY = sim.cameraY + viewWorldH - 10;
       for (let i = 0; i < 14; i++) {
         const angle = -Math.PI + Math.random() * Math.PI;
         const spd = 65 + Math.random() * 110;
@@ -868,6 +901,9 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         }
       }
 
+      const { logicalH, viewWorldH, baseTitleCamY, minCamY, maxCamY, camCenterOffset } =
+        getViewMetrics();
+
       // Ambient rising soap bubbles
       for (let i = 0; i < sim.bubbles.length; i++) {
         const b = sim.bubbles[i];
@@ -875,7 +911,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         b.x -= camDelta * 0.15;
         if (b.x < -20) b.x = LOGICAL_WIDTH + 15;
         if (b.y + b.r < -15) {
-          b.y = LOGICAL_HEIGHT + b.r + 10;
+          b.y = logicalH + b.r + 10;
           b.x = Math.random() * LOGICAL_WIDTH;
         }
       }
@@ -926,7 +962,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
 
       if (state === 'TITLE_MENU') {
         sim.cameraX = 0;
-        sim.cameraY = 34;
+        sim.cameraY = baseTitleCamY;
         for (let i = 0; i < sim.frames.length; i++) {
           const f = sim.frames[i];
           if (f.kind === 'moving_y') {
@@ -1278,7 +1314,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
             }
           }
 
-          const visibleBottomWorldY = sim.cameraY + VIEW_WORLD_HEIGHT;
+          const visibleBottomWorldY = sim.cameraY + viewWorldH;
           if (!landed && sim.playerY - PLAYER_RADIUS > visibleBottomWorldY + 18) {
             if (boardChargesRef.current > 0) {
               boardChargesRef.current = Math.max(0, boardChargesRef.current - 1);
@@ -1402,7 +1438,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       const targetCamX = sim.playerX - 50;
       sim.cameraX += (targetCamX - sim.cameraX) * Math.min(1, dt * 8.5);
 
-      const targetCamY = Math.max(-14, Math.min(78, sim.playerY - 248));
+      const targetCamY = Math.max(minCamY, Math.min(maxCamY, sim.playerY - 248 - camCenterOffset));
       sim.cameraY += (targetCamY - sim.cameraY) * Math.min(1, dt * 4.4);
 
       // Generate new frames & collectibles well ahead
@@ -1852,19 +1888,22 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         ctx.translate((Math.random() - 0.5) * 2 * mag, (Math.random() - 0.5) * 2 * mag);
       }
 
+      const { logicalH, viewWorldH, extraWorldH, baseTitleCamY } = getViewMetrics();
+      const monScale = Math.max(1, viewWorldH / VIEW_WORLD_HEIGHT);
+
       // 1. Warm rose-pink gradient sky
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, LOGICAL_HEIGHT);
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, logicalH);
       bgGrad.addColorStop(0, '#F4A9C1');
       bgGrad.addColorStop(0.55, '#E98DAB');
       bgGrad.addColorStop(1, '#DF7A9B');
       ctx.fillStyle = bgGrad;
-      ctx.fillRect(-12, -12, LOGICAL_WIDTH + 24, LOGICAL_HEIGHT + 24);
+      ctx.fillRect(-12, -12, LOGICAL_WIDTH + 24, logicalH + 24);
 
       const sprites = spritesRef.current;
 
       // 2. Far drifting clouds (subtle vertical parallax in screen space)
       if (sprites && sprites.clouds.length > 0) {
-        const cloudShiftY = -(sim.cameraY - 34) * 0.12;
+        const cloudShiftY = -(sim.cameraY - baseTitleCamY) * 0.12;
         for (let i = 0; i < sim.clouds.length; i++) {
           const c = sim.clouds[i];
           if (c.layer !== 'far') continue;
@@ -1887,11 +1926,14 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         for (let i = 0; i < sim.farMonuments.length; i++) {
           const m = sim.farMonuments[i];
           const sx = m.worldX - farParallaxX;
-          if (sx + m.drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
+          const drawW = m.drawW * monScale;
+          const drawH = m.drawH * monScale;
+          const drawY = m.y - extraWorldH * 0.10;
+          if (sx + drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
           const sp = sprites.monuments[m.spriteIdx % sprites.monuments.length];
           ctx.save();
           ctx.globalAlpha = 0.44;
-          ctx.drawImage(sp, sx, m.y, m.drawW, m.drawH);
+          ctx.drawImage(sp, sx, drawY, drawW, drawH);
           ctx.restore();
         }
       }
@@ -1901,22 +1943,26 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         for (let i = 0; i < sim.monuments.length; i++) {
           const m = sim.monuments[i];
           const sx = m.worldX - parallaxX;
-          if (sx + m.drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
+          const drawW = m.drawW * monScale;
+          const drawH = m.drawH * monScale;
+          const drawY = m.y - extraWorldH * 0.14;
+          if (sx + drawW < -60 || sx > VIEW_WORLD_WIDTH + 60) continue;
           const sp = sprites.monuments[m.spriteIdx % sprites.monuments.length];
           ctx.save();
           ctx.globalAlpha = 0.96;
-          ctx.drawImage(sp, sx, m.y, m.drawW, m.drawH);
+          ctx.drawImage(sp, sx, drawY, drawW, drawH);
           ctx.restore();
         }
       } else {
         // Immediate vector staircase backdrop while bitmap sprites finish decoding
         const parallaxX = (((sim.cameraX * 0.32) % 360) + 360) % 360;
+        const fallbackBottom = Math.ceil(viewWorldH + 80);
         for (let rep = -1; rep <= 1; rep++) {
           const bx = rep * 360 - parallaxX;
           ctx.save();
           ctx.fillStyle = 'rgba(176, 70, 108, 0.42)';
-          ctx.fillRect(bx + 24, 180, 92, 460);
-          ctx.fillRect(bx + 230, 110, 104, 530);
+          ctx.fillRect(bx + 24, 180, 92, fallbackBottom - 180);
+          ctx.fillRect(bx + 230, 110, 104, fallbackBottom - 110);
           ctx.fillStyle = 'rgba(218, 128, 158, 0.5)';
           for (let s = 0; s < 10; s++) {
             ctx.fillRect(bx + 110 + s * 11, 410 - s * 14, 16, 14 + s * 14);
@@ -1928,7 +1974,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
 
       // 4. Mid drifting clouds (behind green frames & character)
       if (sprites && sprites.clouds.length > 0) {
-        const midCloudShiftY = -(sim.cameraY - 34) * 0.20;
+        const midCloudShiftY = -(sim.cameraY - baseTitleCamY) * 0.20;
         for (let i = 0; i < sim.clouds.length; i++) {
           const c = sim.clouds[i];
           if (c.layer !== 'mid') continue;
@@ -2089,7 +2135,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
 
       // 9. Player character (+ active Magnet ring / Rescue Board visual)
       const playerScreenX = sim.playerX - sim.cameraX;
-      if (sim.playerY - PLAYER_RADIUS <= sim.cameraY + VIEW_WORLD_HEIGHT + 30) {
+      if (sim.playerY - PLAYER_RADIUS <= sim.cameraY + viewWorldH + 30) {
         if (sim.magnetTimer > 0 || sim.boostTimer > 0) {
           ctx.save();
           ctx.strokeStyle =
@@ -2142,8 +2188,8 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
         ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
         ctx.shadowColor = 'rgba(130, 35, 70, 0.5)';
         ctx.shadowBlur = 8;
-        ctx.fillText('Tippen & halten für', LOGICAL_WIDTH / 2, 502);
-        ctx.fillText('längere Sprünge', LOGICAL_WIDTH / 2, 526);
+        ctx.fillText('Tippen & halten für', LOGICAL_WIDTH / 2, logicalH - 138);
+        ctx.fillText('längere Sprünge', LOGICAL_WIDTH / 2, logicalH - 114);
         ctx.restore();
       }
 
@@ -2170,7 +2216,7 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       // 12. Impact flash
       if (sim.flashAlpha > 0) {
         ctx.fillStyle = `rgba(255, 255, 255, ${sim.flashAlpha})`;
-        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, logicalH);
       }
 
       ctx.restore();
@@ -2188,8 +2234,19 @@ export const FlapsCanvas: React.FC<FlapsCanvasProps> = ({
       rafId = requestAnimationFrame(tick);
     };
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => syncCanvasSize());
+      resizeObserver.observe(canvas);
+    }
+    window.addEventListener('resize', syncCanvasSize);
+
     rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      cancelAnimationFrame(rafId);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', syncCanvasSize);
+    };
   }, [audio]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {

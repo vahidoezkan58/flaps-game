@@ -680,8 +680,8 @@ export default function App() {
 
   return (
     <main className="flex h-[100dvh] w-screen items-center justify-center bg-[#121015] p-0 sm:p-4">
-      {/* 360x640 Portrait Game Shell */}
-      <div className="relative aspect-[9/16] h-full max-h-[640px] w-full max-w-[360px] overflow-hidden bg-[#FFB3C7] shadow-[0_24px_64px_rgba(0,0,0,0.65)] sm:rounded-[28px] sm:ring-1 sm:ring-white/10">
+      {/* Fullscreen on mobile phones, crisp 360x640 arcade shell on desktop */}
+      <div className="relative h-[100dvh] w-full overflow-hidden bg-[#FFB3C7] shadow-[0_24px_64px_rgba(0,0,0,0.65)] sm:aspect-[9/16] sm:h-full sm:max-h-[640px] sm:max-w-[360px] sm:rounded-[28px] sm:ring-1 sm:ring-white/10">
         {/* Isolated 60fps Game Canvas */}
         <FlapsCanvas
           gameState={gameState}
@@ -713,18 +713,18 @@ export default function App() {
           </div>
         )}
 
-        {/* Top HUD Overlay */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between px-3.5 pt-3.5">
+        {/* Top HUD Overlay (3-column grid keeps Score mathematically centered with zero overlap) */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-start gap-1.5 px-3.5 pt-[max(14px,env(safe-area-inset-top))]">
           {/* Top Left: Coin Wallet (Menu) OR Multiplier + Rescue Boards (In-Game) */}
           {gameState === 'TITLE_MENU' ? (
-            <div className="pointer-events-auto flex items-center gap-1.5">
+            <div className="pointer-events-auto flex items-center gap-1.5 justify-self-start">
               <button
                 type="button"
                 onClick={() => {
                   setShopTab('coins');
                   setActiveModal('shop');
                 }}
-                className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/92 pr-1.5 pl-2.5 text-[#111111] shadow-[0_4px_14px_rgba(20,15,22,0.14)] transition-transform hover:scale-105 active:scale-95"
+                className="flex h-9 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-white/92 pr-1.5 pl-2.5 text-[#111111] shadow-[0_4px_14px_rgba(20,15,22,0.14)] transition-transform hover:scale-105 active:scale-95"
                 title="Coins kaufen"
               >
                 <Coins className="h-4 w-4 text-[#D97706]" />
@@ -738,7 +738,7 @@ export default function App() {
 
               {progression.pendingDoubleSeconds > 0 && (
                 <div
-                  className="flex h-9 items-center gap-1 rounded-full bg-[#CA8A04] px-2.5 text-[10.5px] font-black text-white shadow-sm"
+                  className="flex h-9 items-center gap-1 whitespace-nowrap rounded-full bg-[#CA8A04] px-2.5 text-[10.5px] font-black text-white shadow-sm"
                   title="Nächster Lauf startet mit 2× Multiplikator"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
@@ -747,38 +747,45 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-1 justify-self-start">
               <div className="flex items-center gap-1.5">
                 {activePowerUps.double > 0 ? (
-                  <div className="flex h-7 items-center gap-1 rounded-lg bg-[#CA8A04] px-2 text-[10.5px] font-black text-white shadow-sm">
-                    <Sparkles className="h-3 w-3" />
-                    <span className="tabular-nums">×2 · {activePowerUps.double.toFixed(1)}s</span>
+                  <div className="flex h-7 items-center gap-0.5 whitespace-nowrap rounded-lg bg-[#CA8A04] px-2 font-retro text-[9px] text-white shadow-sm">
+                    ×2
                   </div>
                 ) : (
                   <div
-                    className="flex h-7 items-center rounded-lg bg-[#111111]/75 px-2 font-retro text-[9px] text-white/90 shadow-sm"
+                    className="flex h-7 items-center whitespace-nowrap rounded-lg bg-[#111111]/75 px-2 font-retro text-[9px] text-white/90 shadow-sm"
                     title="Normaler Punkte-Multiplikator"
                   >
                     ×1
                   </div>
                 )}
-                <div className="flex h-7 items-center gap-1 rounded-lg bg-white/90 px-2 text-[11px] font-extrabold text-[#111111] shadow-sm">
+                <div className="flex h-7 items-center gap-1 whitespace-nowrap rounded-lg bg-white/90 px-2 text-[11px] font-extrabold text-[#111111] shadow-sm">
                   <Shield className="h-3.5 w-3.5 text-[#16A34A]" />
                   <span className="tabular-nums">{progression.boardCharges}</span>
                 </div>
               </div>
 
               {/* Active Level-1 Power-Up Timer Pills */}
-              {(activePowerUps.magnet > 0 || activePowerUps.boost > 0) && (
+              {(activePowerUps.double > 0 ||
+                activePowerUps.magnet > 0 ||
+                activePowerUps.boost > 0) && (
                 <div className="flex flex-col gap-1">
+                  {activePowerUps.double > 0 && (
+                    <div className="flex items-center gap-1 whitespace-nowrap rounded-md bg-[#CA8A04]/95 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
+                      <Sparkles className="h-3 w-3" />
+                      <span className="tabular-nums">2× {activePowerUps.double.toFixed(1)}s</span>
+                    </div>
+                  )}
                   {activePowerUps.magnet > 0 && (
-                    <div className="flex items-center gap-1 rounded-md bg-[#0284C7]/90 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
+                    <div className="flex items-center gap-1 whitespace-nowrap rounded-md bg-[#0284C7]/90 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
                       <Magnet className="h-3 w-3" />
                       <span className="tabular-nums">{activePowerUps.magnet.toFixed(1)}s</span>
                     </div>
                   )}
                   {activePowerUps.boost > 0 && (
-                    <div className="flex items-center gap-1 rounded-md bg-[#EA580C]/95 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
+                    <div className="flex items-center gap-1 whitespace-nowrap rounded-md bg-[#EA580C]/95 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
                       <Rocket className="h-3 w-3" />
                       <span className="tabular-nums">{activePowerUps.boost.toFixed(1)}s</span>
                     </div>
@@ -791,10 +798,10 @@ export default function App() {
           {/* Score Bar (Top Center, Retro Arcade Pixel Style) */}
           {gameState !== 'TITLE_MENU' ? (
             <div
-              className="retro-score-box flex min-w-[126px] items-center justify-center bg-gradient-to-b from-[#E5588E] via-[#CC3970] to-[#AE2357] px-4 py-2"
+              className="retro-score-box justify-self-center flex min-w-[92px] sm:min-w-[112px] items-center justify-center bg-gradient-to-b from-[#E5588E] via-[#CC3970] to-[#AE2357] px-3.5 py-1.5 sm:px-4 sm:py-2"
               aria-live="polite"
             >
-              <span className="font-retro tabular-nums text-[14px] leading-none tracking-wider text-white drop-shadow-[0_2px_0_#6B1032]">
+              <span className="font-retro tabular-nums text-[13.5px] sm:text-[14px] leading-none tracking-wider text-white drop-shadow-[0_2px_0_#6B1032]">
                 {score}
               </span>
             </div>
@@ -803,9 +810,9 @@ export default function App() {
           )}
 
           {/* Top Right: Menu = Mute + Settings | In-Game = Run Coins + Pause Button */}
-          <div className="pointer-events-auto flex items-center gap-1.5">
+          <div className="pointer-events-auto flex items-center gap-1.5 justify-self-end">
             {gameState !== 'TITLE_MENU' && (
-              <div className="flex h-8 items-center gap-1 rounded-full bg-white/90 px-2.5 text-[11.5px] font-black text-[#111111] shadow-sm">
+              <div className="flex h-8 items-center gap-1 whitespace-nowrap rounded-full bg-white/90 px-2.5 text-[11.5px] font-black text-[#111111] shadow-sm">
                 <Coins className="h-3.5 w-3.5 text-[#D97706]" />
                 <span className="tabular-nums">+{runCoins}</span>
               </div>
@@ -860,7 +867,7 @@ export default function App() {
 
         {/* TITLE SCREEN OVERLAY */}
         {gameState === 'TITLE_MENU' && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-between px-5 pt-14 pb-3.5">
+          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-between px-5 pt-[calc(max(12px,env(safe-area-inset-top))+46px)] pb-[max(14px,env(safe-area-inset-bottom))]">
             {/* Title Lockup + Challenge */}
             <div className="flex flex-col items-center text-center">
               <svg
